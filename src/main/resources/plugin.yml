@@ -2,3 +2,15 @@ name: PVPRank
 version: '${project.version}'
 main: top.mpt.huihui.pvprank.PVPRank
 api-version: '1.13'
+
+commands:
+  pvprank:
+    description: PVPRank
+
+permissions:
+  pvprank.player:
+    description: Allows PVPRank commands
+    default: true
+  pvprank.operator:
+    description: Allows PVPRank OP commands
+    default: op
