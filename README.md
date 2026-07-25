@@ -1,2 +1,2 @@
 # PVPRank
-A plugin that allows players to pvp and rank.
+## 一个允许服务器进行组队和solo PVP的插件

@@ -1,6 +1,7 @@
 package top.mpt.huihui.pvprank;
 
 import org.bukkit.Bukkit;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import top.mpt.huihui.pvprank.executor.TeamExecutor;
 import top.mpt.huihui.pvprank.commands.CommandHandler;
@@ -15,7 +16,6 @@ public final class PVPRank extends JavaPlugin {
 
     public static PVPRank instance;
     public static String normal = "[PVP] ";
-    public static TeamExecutor teamExecutor;
     public static boolean modeStarted = false;
     public static List<String> Online_Players = new ArrayList<>();
 
@@ -29,7 +29,6 @@ public final class PVPRank extends JavaPlugin {
         // config
         getConfig().options().copyDefaults();
         saveDefaultConfig();
-        Bukkit.getOnlinePlayers().forEach(it -> Online_Players.add(it.getName()) );
 
         /* 数据库操作 */
         dbManager = new DatabaseManager(getDataFolder().getAbsolutePath());
@@ -40,16 +39,34 @@ public final class PVPRank extends JavaPlugin {
             teamPlayerDAO.createTables();
             LogUtils.info(normal + "#AQUA#数据库准备就绪");
         });
+        // 初始化Team
+         TeamExecutor.initializeDefaultTeam();
 
-//        teamExecutor = new TeamExecutor(this, teamPlayerDAO);
 
         /* 指令，事件操作 */
         getCommand("pvprank").setExecutor(new CommandHandler());
+
+        /* 检查是否装有MV插件 */
+        // 注意：插件名称是 "Multiverse-Core"，大小写敏感
+        Plugin mvPlugin = Bukkit.getPluginManager().getPlugin("Multiverse-Core");
+
+        if (mvPlugin != null && mvPlugin.isEnabled()) {
+            // Multiverse-Core 插件存在且已启用
+            LogUtils.info("Multiverse-Core 已找到并启用！");
+        } else {
+            // 插件不存在或未启用
+            LogUtils.warning("未检测到 Multiverse-Core，本插件将不可工作。");
+        }
+
 
     }
 
     @Override
     public void onDisable() {
-        // Plugin shutdown logic
+        // 务必关闭连接池，释放数据库文件句柄
+        if (dbManager != null) {
+            dbManager.close();
+            LogUtils.info("数据库连接已释放");
+        }
     }
 }

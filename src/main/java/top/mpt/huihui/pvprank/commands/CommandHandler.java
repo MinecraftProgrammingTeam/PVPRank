@@ -4,6 +4,8 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabExecutor;
 import top.mpt.huihui.pvprank.commands.impl.*;
+import top.mpt.huihui.pvprank.commands.impl.op.addPlayer;
+import top.mpt.huihui.pvprank.commands.impl.op.deltaScore;
 import top.mpt.huihui.pvprank.utils.PlayerUtils;
 
 
@@ -31,7 +33,17 @@ public class CommandHandler implements TabExecutor {
      * 注意要使用小写，与发送者的指令进行匹配
      */
     private void initHandler() {
+        registerCommand(new accept());
+        registerCommand(new breakup());
+        registerCommand(new createTeam());
+        registerCommand(new invite());
+        registerCommand(new setPermission());
         registerCommand(new solo());
+        registerCommand(new teamPVP());
+
+        // OP Commands
+        registerCommand(new addPlayer());
+        registerCommand(new deltaScore());
 
     }
 
@@ -121,6 +133,10 @@ public class CommandHandler implements TabExecutor {
             //玩家可能会输错，找不到指令，那就不管了
             if (cmd != null) {
                 if (Objects.equals(cmd.getCmdName(), "solo")){
+                    return cmd.getListParams();
+                } else if (Objects.equals(cmd.getCmdName(), "invite")){
+                    return cmd.getListParams();
+                } else if (Objects.equals(cmd.getCmdName(), "setPermission")){
                     return cmd.getListParams();
                 }
             }

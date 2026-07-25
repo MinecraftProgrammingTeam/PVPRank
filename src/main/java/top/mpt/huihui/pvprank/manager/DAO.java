@@ -9,8 +9,11 @@ import java.util.List;
 
 /**
  * 管理两张表：
- * 1. teams（团队）: id(INT主键), name(TEXT), score(LONG)，in_battle(BOOL)
- * 2. players（玩家）: uuid(TEXT主键), player_name(TEXT), team_id(INT), personal_score(LONG)，in_battle(BOOL)
+ * 1. teams（团队）: id(INT主键), name(TEXT), score(LONG), in_battle(BOOL),
+ * opponent(INT)(ID)
+ * 2. players（玩家）: uuid(TEXT主键), player_name(TEXT), team_id(INT),
+ * personal_score(LONG), in_battle(BOOL), join_time(TIMESTAMP),
+ * permission(owner, op, mem), opponent(TEXT)(uuid)
  * 外键：players.team_id 关联 teams.id，删除团队时玩家 team_id 置为 NULL
  */
 public class DAO {
@@ -30,7 +33,8 @@ public class DAO {
                 "id INTEGER PRIMARY KEY, " +
                 "name TEXT NOT NULL, " +
                 "score INTEGER DEFAULT 0, " +
-                "in_battle INTEGER DEFAULT 0" +     // 0 = false, 1 = true
+                "in_battle INTEGER DEFAULT 0, " +
+                "opponent_team_id INTEGER DEFAULT NULL" +   // 新增：对手队伍ID
                 ")";
 
         String createPlayers = "CREATE TABLE IF NOT EXISTS players (" +
@@ -40,7 +44,8 @@ public class DAO {
                 "personal_score INTEGER DEFAULT 0, " +
                 "in_battle INTEGER DEFAULT 0, " +
                 "join_time TIMESTAMP DEFAULT NULL, " +
-                "permission VARCHAR(20) DEFAULT 'member', " +   // 新增：owner/operator/member
+                "permission VARCHAR(20) DEFAULT 'member', " +
+                "opponent_uuid VARCHAR(36) DEFAULT NULL, " +   // 新增：对手玩家UUID
                 "FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL" +
                 ")";
 
@@ -61,15 +66,24 @@ public class DAO {
     // ========== 团队操作 ==========
 
     // 插入或更新团队（存在则更新，不存在则插入）
-    public void saveTeam(int id, String name, long score, boolean inBattle) {
-        String sql = "INSERT INTO teams (id, name, score, in_battle) VALUES (?, ?, ?, ?) " +
-                "ON CONFLICT(id) DO UPDATE SET name = excluded.name, score = excluded.score, in_battle = excluded.in_battle";
+    public void saveTeam(int id, String name, long score, boolean inBattle, Integer opponentTeamId) {
+        String sql = "INSERT INTO teams (id, name, score, in_battle, opponent_team_id) VALUES (?, ?, ?, ?, ?) " +
+                "ON CONFLICT(id) DO UPDATE SET " +
+                "name = excluded.name, " +
+                "score = excluded.score, " +
+                "in_battle = excluded.in_battle, " +
+                "opponent_team_id = excluded.opponent_team_id";
         try (Connection conn = dbManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
             stmt.setString(2, name);
             stmt.setLong(3, score);
             stmt.setInt(4, inBattle ? 1 : 0);
+            if (opponentTeamId == null) {
+                stmt.setNull(5, java.sql.Types.INTEGER);
+            } else {
+                stmt.setInt(5, opponentTeamId);
+            }
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -78,17 +92,20 @@ public class DAO {
 
     // 查询团队（返回 Team 对象，需要自己定义简单 POJO，或直接用数组）
     public Team getTeam(int id) {
-        String sql = "SELECT id, name, score, in_battle FROM teams WHERE id = ?";
+        String sql = "SELECT id, name, score, in_battle, opponent_team_id FROM teams WHERE id = ?";
         try (Connection conn = dbManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, id);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
+                    Integer opp = rs.getInt("opponent_team_id");
+                    if (rs.wasNull()) opp = null;
                     return new Team(
                             rs.getInt("id"),
                             rs.getString("name"),
                             rs.getLong("score"),
-                            rs.getInt("in_battle") == 1
+                            rs.getInt("in_battle") == 1,
+                            opp
                     );
                 }
             }
@@ -97,20 +114,22 @@ public class DAO {
         }
         return null;
     }
-
     // 获取所有团队
     public List<Team> getAllTeams() {
         List<Team> list = new ArrayList<>();
-        String sql = "SELECT id, name, score, in_battle FROM teams ORDER BY id";
+        String sql = "SELECT id, name, score, in_battle, opponent_team_id FROM teams ORDER BY id";
         try (Connection conn = dbManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
+                Integer opp = rs.getInt("opponent_team_id");
+                if (rs.wasNull()) opp = null;
                 list.add(new Team(
                         rs.getInt("id"),
                         rs.getString("name"),
                         rs.getLong("score"),
-                        rs.getInt("in_battle") == 1
+                        rs.getInt("in_battle") == 1,
+                        opp
                 ));
             }
         } catch (SQLException e) {
@@ -157,20 +176,52 @@ public class DAO {
         }
     }
 
+    /**
+     * 设置团队对手
+     * @param teamId 团队ID
+     * @param opponentTeamId 对手ID
+     */
+    public void setTeamOpponent(int teamId, Integer opponentTeamId) {
+        String sql = "UPDATE teams SET opponent_team_id = ? WHERE id = ?";
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            if (opponentTeamId == null) {
+                stmt.setNull(1, java.sql.Types.INTEGER);
+            } else {
+                stmt.setInt(1, opponentTeamId);
+            }
+            stmt.setInt(2, teamId);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
     // ========== 玩家操作 ==========
 
-    // 插入或更新玩家
+    /**
+     * 插入或更新玩家数据库信息
+     * @param uuid UUID
+     * @param playerName 玩家ID
+     * @param teamId 玩家所属团队ID
+     * @param personalScore 玩家个人积分
+     * @param inBattle 是否在solo中
+     * @param joinTime 加入时间
+     * @param permission 权限(owner/operator/member)
+     * @param opponentUuid 对手UUID
+     */
     public void savePlayer(String uuid, String playerName, int teamId, long personalScore,
-                           boolean inBattle, Long joinTime, String permission) {
-        String sql = "INSERT INTO players (uuid, player_name, team_id, personal_score, in_battle, join_time, permission) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?) " +
+                           boolean inBattle, Long joinTime, String permission, String opponentUuid) {
+        String sql = "INSERT INTO players (uuid, player_name, team_id, personal_score, in_battle, join_time, permission, opponent_uuid) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
                 "ON CONFLICT(uuid) DO UPDATE SET " +
                 "player_name = excluded.player_name, " +
                 "team_id = excluded.team_id, " +
                 "personal_score = excluded.personal_score, " +
                 "in_battle = excluded.in_battle, " +
                 "join_time = excluded.join_time, " +
-                "permission = excluded.permission";
+                "permission = excluded.permission, " +
+                "opponent_uuid = excluded.opponent_uuid";
         try (Connection conn = dbManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid);
@@ -183,22 +234,34 @@ public class DAO {
             } else {
                 stmt.setTimestamp(6, new java.sql.Timestamp(joinTime));
             }
-            stmt.setString(7, permission);   // 新增
+            stmt.setString(7, permission);
+            if (opponentUuid == null) {
+                stmt.setNull(8, java.sql.Types.VARCHAR);
+            } else {
+                stmt.setString(8, opponentUuid);
+            }
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    // 查询玩家（返回 PlayerData 对象）
+
+    /**
+     * 查询玩家
+     * @param uuid UUID
+     * @return PlayerData
+     */
     public PlayerData getPlayer(String uuid) {
-        String sql = "SELECT uuid, player_name, team_id, personal_score, in_battle, join_time, permission FROM players WHERE uuid = ?";
+        String sql = "SELECT uuid, player_name, team_id, personal_score, in_battle, join_time, permission, opponent_uuid FROM players WHERE uuid = ?";
         try (Connection conn = dbManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     Long joinTime = rs.getTimestamp("join_time") == null ? null : rs.getTimestamp("join_time").getTime();
+                    String opp = rs.getString("opponent_uuid");
+                    if (rs.wasNull()) opp = null;
                     return new PlayerData(
                             rs.getString("uuid"),
                             rs.getString("player_name"),
@@ -206,7 +269,8 @@ public class DAO {
                             rs.getLong("personal_score"),
                             rs.getInt("in_battle") == 1,
                             joinTime,
-                            rs.getString("permission")
+                            rs.getString("permission"),
+                            opp
                     );
                 }
             }
@@ -216,16 +280,22 @@ public class DAO {
         return null;
     }
 
-    // 根据团队 ID 获取该团队所有玩家
+    /**
+     * 根据团队 ID 获取该团队所有玩家
+     * @param teamId 团队ID
+     * @return 玩家列表
+     */
     public List<PlayerData> getPlayersByTeam(int teamId) {
         List<PlayerData> list = new ArrayList<>();
-        String sql = "SELECT uuid, player_name, team_id, personal_score, in_battle, join_time, permission FROM players WHERE team_id = ?";
+        String sql = "SELECT uuid, player_name, team_id, personal_score, in_battle, join_time, permission, opponent_uuid FROM players WHERE team_id = ?";
         try (Connection conn = dbManager.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setInt(1, teamId);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Long joinTime = rs.getTimestamp("join_time") == null ? null : rs.getTimestamp("join_time").getTime();
+                    String opp = rs.getString("opponent_uuid");
+                    if (rs.wasNull()) opp = null;
                     list.add(new PlayerData(
                             rs.getString("uuid"),
                             rs.getString("player_name"),
@@ -233,7 +303,8 @@ public class DAO {
                             rs.getLong("personal_score"),
                             rs.getInt("in_battle") == 1,
                             joinTime,
-                            rs.getString("permission")
+                            rs.getString("permission"),
+                            opp
                     ));
                 }
             }
@@ -318,5 +389,44 @@ public class DAO {
         }
     }
 
+    /**
+     * 判断玩家是否在数据库中存在
+     * @param uuid 玩家UUID
+     * @return true=存在，false=不存在
+     */
+    public boolean existsPlayer(String uuid) {
+        String sql = "SELECT 1 FROM players WHERE uuid = ?";
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, uuid);
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next();  // 有结果即存在
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 设置玩家的对抗状态
+     * @param uuid 玩家UUID
+     * @param opponentUuid 对手UUID
+     */
+    public void setPlayerOpponent(String uuid, String opponentUuid) {
+        String sql = "UPDATE players SET opponent_uuid = ? WHERE uuid = ?";
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            if (opponentUuid == null) {
+                stmt.setNull(1, java.sql.Types.VARCHAR);
+            } else {
+                stmt.setString(1, opponentUuid);
+            }
+            stmt.setString(2, uuid);
+            stmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 
 }

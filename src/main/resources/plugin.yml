@@ -2,6 +2,7 @@ name: PVPRank
 version: '${project.version}'
 main: top.mpt.huihui.pvprank.PVPRank
 api-version: '1.13'
+depend: [Multiverse-Core]
 
 commands:
   pvprank:

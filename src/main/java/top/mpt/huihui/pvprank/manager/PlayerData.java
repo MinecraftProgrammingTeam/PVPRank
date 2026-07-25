@@ -7,10 +7,11 @@ public class PlayerData {
     private final long personalScore;
     private final boolean inBattle;
     private final Long joinTime;
-    private final String permission;   // 新增
+    private final String permission;
+    private final String opponentUuid;   // 新增
 
     public PlayerData(String uuid, String playerName, int teamId, long personalScore,
-                      boolean inBattle, Long joinTime, String permission) {
+                      boolean inBattle, Long joinTime, String permission, String opponentUuid) {
         this.uuid = uuid;
         this.playerName = playerName;
         this.teamId = teamId;
@@ -18,6 +19,7 @@ public class PlayerData {
         this.inBattle = inBattle;
         this.joinTime = joinTime;
         this.permission = permission;
+        this.opponentUuid = opponentUuid;
     }
 
     public String getUuid() { return uuid; }
@@ -26,5 +28,6 @@ public class PlayerData {
     public long getPersonalScore() { return personalScore; }
     public boolean isInBattle() { return inBattle; }
     public Long getJoinTime() { return joinTime; }
-    public String getPermission() { return permission; }   // 新增 getter
+    public String getPermission() { return permission; }
+    public String getOpponentUuid() { return opponentUuid; }   // 新增 getter
 }

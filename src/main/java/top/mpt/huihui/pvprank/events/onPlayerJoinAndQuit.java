@@ -5,6 +5,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import top.mpt.huihui.pvprank.executor.TeamExecutor;
 
 import static top.mpt.huihui.pvprank.PVPRank.*;
 
@@ -16,6 +17,13 @@ public class onPlayerJoinAndQuit implements Listener {
         if (!Online_Players.contains(player.getName())) {
             Online_Players.add(player.getName());
         }
+        // 如果玩家没注册数据库，注册一下。
+        TeamExecutor.checkPlayerExistsAsync(player, exists -> {
+            if (!exists) {
+                TeamExecutor.registerPlayer(player);
+            }
+
+        });
 
     }
 
