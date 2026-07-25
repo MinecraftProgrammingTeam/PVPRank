@@ -40,7 +40,7 @@ public final class PVPRank extends JavaPlugin {
             LogUtils.info(normal + "#AQUA#数据库准备就绪");
         });
         // 初始化Team
-         TeamExecutor.initializeDefaultTeam();
+//         TeamExecutor.initializeDefaultTeam();
 
 
         /* 指令，事件操作 */

@@ -93,7 +93,7 @@ public class TeamExecutor {
         dao.savePlayer(
                 String.valueOf(player.getUniqueId()),
                 player.getName(),
-                0,
+                null,
                 0,
                 false,
                 Instant.now().toEpochMilli(),

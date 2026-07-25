@@ -18,8 +18,6 @@ public class createTeam extends ICommand {
         super("addTeam", "", "/pvprank addTeam <团队编号> <团队名称>");
     }
 
-    private static Player player = null;
-
     @Override
     public boolean onCommand(CommandSender sender, String[] args) {
         if (args.length != 2){
@@ -31,7 +29,7 @@ public class createTeam extends ICommand {
             return true;
         }
         if (sender instanceof Player){
-            player = (Player) sender;
+            Player player = (Player) sender;
             PlayerData playerData = TeamExecutor.getPlayerData(player.getUniqueId());
             Integer currentTeamId = (playerData != null) ? playerData.getTeamId() : null;
             if (currentTeamId != null){

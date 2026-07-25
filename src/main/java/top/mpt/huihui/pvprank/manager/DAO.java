@@ -210,7 +210,7 @@ public class DAO {
      * @param permission 权限(owner/operator/member)
      * @param opponentUuid 对手UUID
      */
-    public void savePlayer(String uuid, String playerName, int teamId, long personalScore,
+    public void savePlayer(String uuid, String playerName, Integer teamId, long personalScore,
                            boolean inBattle, Long joinTime, String permission, String opponentUuid) {
         String sql = "INSERT INTO players (uuid, player_name, team_id, personal_score, in_battle, join_time, permission, opponent_uuid) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
@@ -226,7 +226,11 @@ public class DAO {
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, uuid);
             stmt.setString(2, playerName);
-            stmt.setInt(3, teamId);
+            if (teamId == null) {
+                stmt.setNull(3, java.sql.Types.INTEGER);
+            } else {
+                stmt.setInt(3, teamId);
+            }
             stmt.setLong(4, personalScore);
             stmt.setInt(5, inBattle ? 1 : 0);
             if (joinTime == null) {
@@ -260,12 +264,14 @@ public class DAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     Long joinTime = rs.getTimestamp("join_time") == null ? null : rs.getTimestamp("join_time").getTime();
+                    int rawTeamId = rs.getInt("team_id");
+                    Integer teamId = rs.wasNull() ? null : rawTeamId;
                     String opp = rs.getString("opponent_uuid");
                     if (rs.wasNull()) opp = null;
                     return new PlayerData(
                             rs.getString("uuid"),
                             rs.getString("player_name"),
-                            rs.getInt("team_id"),
+                            teamId,
                             rs.getLong("personal_score"),
                             rs.getInt("in_battle") == 1,
                             joinTime,
@@ -294,12 +300,14 @@ public class DAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     Long joinTime = rs.getTimestamp("join_time") == null ? null : rs.getTimestamp("join_time").getTime();
+                    int rawTeamId = rs.getInt("team_id");
+                    Integer teamIdResult = rs.wasNull() ? null : rawTeamId;
                     String opp = rs.getString("opponent_uuid");
                     if (rs.wasNull()) opp = null;
                     list.add(new PlayerData(
                             rs.getString("uuid"),
                             rs.getString("player_name"),
-                            rs.getInt("team_id"),
+                            teamIdResult,
                             rs.getLong("personal_score"),
                             rs.getInt("in_battle") == 1,
                             joinTime,
