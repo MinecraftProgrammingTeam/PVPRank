@@ -1,5 +1,11 @@
 start: false
 
+# 单挑一把个人会输掉/赢得多少分
+scores_solo: 20
+
+# 团队竞技输掉/赢得的分
+scores_team: 100
+
 # 设置A团队比B团队多几个人时，B团队会每个人加半颗心(1滴血)
 # 默认设置为A多一个人B每人多两颗心
 # 如果多的玩家少于这个数，玩家的血量将不会有任何变化(不存在百分比加血)
@@ -19,10 +25,11 @@ worlds_for_solo:
       - 0,0,0
       - 20,0,0
 
-worlds_for_teamPVP:
+worlds_for_team:
   - world:
       - 0,0,0
       - 20,0,0
   - world_nether:
       - 0,0,0
       - 20,0,0
+

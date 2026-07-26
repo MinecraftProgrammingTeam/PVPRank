@@ -238,22 +238,22 @@ public class TeamExecutor {
         }
     }
 
-    /**
-     * 初始化默认队伍，编号为0，名称为"Default"
-     * 如果已存在则跳过，否则创建
-     */
-    public static void initializeDefaultTeam() {
-        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
-            Team team = dao.getTeam(0);
-            if (team == null) {
-                dao.saveTeam(0, "Default", 0, false, null);
-                LogUtils.info("已创建默认队伍 Default (ID: 0)");
-                LogUtils.info("请管理员利用/pvprank setPermission <管理员ID> operator来使得管理员可以管理玩家的初始Team");
-            } else {
-                LogUtils.info("默认队伍 Default 已存在，无需创建");
-            }
-        });
-    }
+//    /**
+//     * 初始化默认队伍，编号为0，名称为"Default"
+//     * 如果已存在则跳过，否则创建
+//     */
+//    public static void initializeDefaultTeam() {
+//        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+//            Team team = dao.getTeam(0);
+//            if (team == null) {
+//                dao.saveTeam(0, "Default", 0, false, null);
+//                LogUtils.info("已创建默认队伍 Default (ID: 0)");
+//                LogUtils.info("请管理员利用/pvprank setPermission <管理员ID> operator来使得管理员可以管理玩家的初始Team");
+//            } else {
+//                LogUtils.info("默认队伍 Default 已存在，无需创建");
+//            }
+//        });
+//    }
 
     /**
      * 检查玩家是否处于数据库中（录入数据库来用）（多线程）
@@ -265,6 +265,18 @@ public class TeamExecutor {
             boolean exists = dao.existsPlayer(player.getUniqueId().toString());
             Bukkit.getScheduler().runTask(plugin, () -> callback.accept(exists));
         });
+    }
+
+    public static void setPlayerOpponent(String playerUUID, String opponentUUID) {
+        dao.setPlayerOpponent(playerUUID, opponentUUID);
+    }
+
+    public static void setPlayerPermission(Player player, String permission) {
+        dao.setPlayerPermission(player.getUniqueId().toString(), permission);
+    }
+
+    public static void deltaPlayerScore(Player player, int score) {
+        dao.addPlayerScore(player.getUniqueId().toString(), score);
     }
 
 
