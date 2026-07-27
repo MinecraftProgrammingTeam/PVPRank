@@ -43,8 +43,6 @@ public class breakup extends ICommand {
             return true;
         }
 
-        // 获取所有成员并踢出
-        List<PlayerData> members = TeamExecutor.getTeamMembers(teamId);
         TeamExecutor.removeTeam(teamId);
 
         PlayerUtils.send(player, normal + "#GREEN#团队 #AQUA#%d #GREEN#已解散！", teamId);

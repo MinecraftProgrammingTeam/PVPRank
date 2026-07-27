@@ -64,7 +64,7 @@ public class invite extends ICommand {
         });
 
         // 发送可点击tellraw消息
-        String msg = normal + "#AQUA#" + inviter.getName() + " #GREEN#邀请你加入团队 #AQUA#" + teamId;
+        String msg = normal + "#AQUA#" + inviter.getName() + " #GREEN#邀请你加入团队 #AQUA#" + TeamExecutor.getTeamData(teamId).getName();
         String cleanMsg = msg.replace("#AQUA#", "").replace("#GREEN#", "").replace(normal, "");
         String json = "[{\"text\":\"" + cleanMsg + "\",\"color\":\"green\"}," +
                 "{\"text\":\" [点击接受]\",\"color\":\"gold\"," +

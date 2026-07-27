@@ -1,12 +1,15 @@
 package top.mpt.huihui.pvprank;
 
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import top.mpt.huihui.pvprank.executor.TeamExecutor;
 import top.mpt.huihui.pvprank.commands.CommandHandler;
 import top.mpt.huihui.pvprank.events.onPlayerDeath;
 import top.mpt.huihui.pvprank.events.onPlayerJoinAndQuit;
+import top.mpt.huihui.pvprank.gui.GUIListener;
+import top.mpt.huihui.pvprank.gui.GUIManager;
 import top.mpt.huihui.pvprank.manager.DAO;
 import top.mpt.huihui.pvprank.manager.DatabaseManager;
 import top.mpt.huihui.pvprank.utils.LogUtils;
@@ -49,8 +52,17 @@ public final class PVPRank extends JavaPlugin {
         getCommand("pvprank").setExecutor(new CommandHandler());
 
         /* 注册事件监听器 */
-        Bukkit.getPluginManager().registerEvents(new top.mpt.huihui.pvprank.events.onPlayerDeath(), this);
-        Bukkit.getPluginManager().registerEvents(new top.mpt.huihui.pvprank.events.onPlayerJoinAndQuit(), this);
+        Bukkit.getPluginManager().registerEvents(new onPlayerDeath(), this);
+        Bukkit.getPluginManager().registerEvents(new GUIListener(), this);
+        Bukkit.getPluginManager().registerEvents(new onPlayerJoinAndQuit(), this);
+
+        /* /pvp 打开GUI */
+        getCommand("pvp").setExecutor((sender, cmd, label, args) -> {
+            if (sender instanceof Player) {
+                GUIManager.openMainMenu((Player) sender);
+            }
+            return true;
+        });
 
         /* 检查是否装有MV插件 */
         // 注意：插件名称是 "Multiverse-Core"，大小写敏感

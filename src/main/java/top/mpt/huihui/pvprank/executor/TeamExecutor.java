@@ -38,7 +38,7 @@ public class TeamExecutor {
             } else {
                 dao.saveTeam(teamID, finalName, 0, false, null);
                 ChatUtils.broadcast("#GREEN#" + "PVP团队: #AQUA#%s #GREEN#已被 #AQUA#%s #GREEN#创建。团队编号为：%d", teamName, sender.getName(), teamID);
-                LogUtils.info("" + "创建队伍成功，ID: " + teamID + ", " + "名称: " + finalName);
+                LogUtils.info("创建队伍成功，ID: " + teamID + ", " + "名称: " + finalName);
                 if (sender instanceof Player) {
                     addPlayer((Player) sender, teamID);
                     setPlayerPermission((Player) sender, "owner");
@@ -76,6 +76,9 @@ public class TeamExecutor {
 
     public static void removeTeam(int teamID) {
         Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            dao.getPlayersByTeam(teamID).forEach((player) -> {
+                dao.setPlayerPermission(player.getUuid(),  "member");
+            });
             dao.deleteTeam(teamID);
             LogUtils.info("队伍 " + teamID + " 已解散");
         });

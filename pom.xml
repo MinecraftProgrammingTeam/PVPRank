@@ -58,6 +58,10 @@
             <id>sonatype</id>
             <url>https://oss.sonatype.org/content/groups/public/</url>
         </repository>
+        <repository>
+            <id>mvn-wesjd-net</id>
+            <url>https://mvn.wesjd.net/</url>
+        </repository>
     </repositories>
 
     <dependencies>
@@ -79,6 +83,12 @@
             <groupId>com.zaxxer</groupId>
             <artifactId>HikariCP</artifactId>
             <version>5.1.0</version>
+        </dependency>
+        <dependency>
+            <groupId>net.wesjd</groupId>
+            <artifactId>anvilgui</artifactId>
+            <version>1.10.13-SNAPSHOT</version>
+            <scope>compile</scope> <!-- Include the library in your JAR -->
         </dependency>
     </dependencies>
 </project>

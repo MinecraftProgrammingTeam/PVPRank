@@ -465,4 +465,23 @@ public class DAO {
         }
         return list;
     }
+
+    // 获取最小的未被使用的团队ID（从1开始）
+    public int getLowestAvailableTeamId() {
+        String sql = "SELECT id FROM teams ORDER BY id";
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            int expected = 1;
+            while (rs.next()) {
+                int current = rs.getInt("id");
+                if (current > expected) break;
+                expected = current + 1;
+            }
+            return expected;
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 1;
+    }
 }

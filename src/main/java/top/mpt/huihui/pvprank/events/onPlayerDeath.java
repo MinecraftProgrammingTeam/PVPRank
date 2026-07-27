@@ -40,6 +40,7 @@ public class onPlayerDeath implements Listener {
 
         // 处理团队PVP死亡
         if (TeamExecutor.isPlayerInTeamPvP(dead)) {
+            event.getDrops().clear();
             PvPManager.handleTeamPvPDeath(dead);
         }
     }
