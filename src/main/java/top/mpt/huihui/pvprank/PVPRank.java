@@ -5,6 +5,8 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import top.mpt.huihui.pvprank.executor.TeamExecutor;
 import top.mpt.huihui.pvprank.commands.CommandHandler;
+import top.mpt.huihui.pvprank.events.onPlayerDeath;
+import top.mpt.huihui.pvprank.events.onPlayerJoinAndQuit;
 import top.mpt.huihui.pvprank.manager.DAO;
 import top.mpt.huihui.pvprank.manager.DatabaseManager;
 import top.mpt.huihui.pvprank.utils.LogUtils;
@@ -15,7 +17,7 @@ import java.util.List;
 public final class PVPRank extends JavaPlugin {
 
     public static PVPRank instance;
-    public static String normal = "[PVP] ";
+    public static String normal = "#AQUA#[PVP] ";
     public static boolean modeStarted = false;
     public static List<String> Online_Players = new ArrayList<>();
 
@@ -37,7 +39,7 @@ public final class PVPRank extends JavaPlugin {
         // 异步建表
         Bukkit.getScheduler().runTaskAsynchronously(this, () -> {
             teamPlayerDAO.createTables();
-            LogUtils.info(normal + "#AQUA#数据库准备就绪");
+            LogUtils.info("#AQUA#数据库准备就绪");
         });
         // 初始化Team
 //         TeamExecutor.initializeDefaultTeam();
@@ -45,6 +47,10 @@ public final class PVPRank extends JavaPlugin {
 
         /* 指令，事件操作 */
         getCommand("pvprank").setExecutor(new CommandHandler());
+
+        /* 注册事件监听器 */
+        Bukkit.getPluginManager().registerEvents(new top.mpt.huihui.pvprank.events.onPlayerDeath(), this);
+        Bukkit.getPluginManager().registerEvents(new top.mpt.huihui.pvprank.events.onPlayerJoinAndQuit(), this);
 
         /* 检查是否装有MV插件 */
         // 注意：插件名称是 "Multiverse-Core"，大小写敏感

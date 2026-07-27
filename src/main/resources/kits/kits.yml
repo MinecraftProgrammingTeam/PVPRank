@@ -1,1 +1,4 @@
 # 这里存的是用来给双方pvp的装备
+# 团队和solo的规格一样，都用下面的东西，自动发放到玩家背包里面
+things:
+  - "minecraft:diamond_sword"

@@ -437,4 +437,32 @@ public class DAO {
         }
     }
 
+
+    // 获取所有玩家
+    public List<PlayerData> getAllPlayers() {
+        List<PlayerData> list = new ArrayList<>();
+        String sql = "SELECT uuid, player_name, team_id, personal_score, in_battle, join_time, permission, opponent_uuid FROM players ORDER BY player_name";
+        try (Connection conn = dbManager.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql);
+             ResultSet rs = stmt.executeQuery()) {
+            while (rs.next()) {
+                Integer teamId = rs.getInt("team_id");
+                if (rs.wasNull()) teamId = null;
+                String oppUuid = rs.getString("opponent_uuid");
+                list.add(new PlayerData(
+                        rs.getString("uuid"),
+                        rs.getString("player_name"),
+                        teamId,
+                        rs.getLong("personal_score"),
+                        rs.getInt("in_battle") == 1,
+                        rs.getLong("join_time"),
+                        rs.getString("permission"),
+                        oppUuid
+                ));
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
 }

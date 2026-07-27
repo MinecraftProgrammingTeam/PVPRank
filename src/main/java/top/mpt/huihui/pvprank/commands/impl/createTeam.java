@@ -9,13 +9,11 @@ import top.mpt.huihui.pvprank.utils.ChatUtils;
 import top.mpt.huihui.pvprank.utils.PlayerUtils;
 
 import static top.mpt.huihui.pvprank.PVPRank.normal;
-import static top.mpt.huihui.pvprank.executor.TeamExecutor.SOLO_MAX;
-import static top.mpt.huihui.pvprank.executor.TeamExecutor.SOLO_MIN;
 
 public class createTeam extends ICommand {
 
     public createTeam() {
-        super("addTeam", "", "/pvprank addTeam <团队编号> <团队名称>");
+        super("addteam", "", "/pvprank addTeam <团队编号> <团队名称>");
     }
 
     @Override
@@ -33,11 +31,7 @@ public class createTeam extends ICommand {
             PlayerData playerData = TeamExecutor.getPlayerData(player.getUniqueId());
             Integer currentTeamId = (playerData != null) ? playerData.getTeamId() : null;
             if (currentTeamId != null){
-                if (currentTeamId < SOLO_MIN || currentTeamId > SOLO_MAX){
-                    PlayerUtils.send(player, normal + "#RED#请先退出当前的%d号团队再创建新团队！", currentTeamId);
-                } else {
-                    PlayerUtils.send(player, normal + "#RED#请先结束PVP再创建团队");
-                }
+                PlayerUtils.send(player, normal + "#RED#请先退出当前的%d号团队再创建新团队！", currentTeamId);
                 return true;
             }
         }

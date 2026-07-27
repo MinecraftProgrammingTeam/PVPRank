@@ -32,5 +32,7 @@ public class onPlayerJoinAndQuit implements Listener {
         Player player = event.getPlayer();
 
         Online_Players.remove(player.getName());
+        // 如果在战斗，默认对面胜利
+
     }
 }

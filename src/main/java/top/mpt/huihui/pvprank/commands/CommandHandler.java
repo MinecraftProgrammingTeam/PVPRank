@@ -6,120 +6,88 @@ import org.bukkit.command.TabExecutor;
 import top.mpt.huihui.pvprank.commands.impl.*;
 import top.mpt.huihui.pvprank.commands.impl.op.addPlayer;
 import top.mpt.huihui.pvprank.commands.impl.op.deltaScore;
+import top.mpt.huihui.pvprank.commands.impl.op.forceKick;
+import top.mpt.huihui.pvprank.commands.impl.op.status;
 import top.mpt.huihui.pvprank.utils.PlayerUtils;
-
 
 import java.util.*;
 
-/**
- * 子指令处理器
- */
+import static top.mpt.huihui.pvprank.PVPRank.Online_Players;
+
 public class CommandHandler implements TabExecutor {
 
-    /**
-     * 维护的指令集合
-     */
     private final Map<String, ICommand> commands = new HashMap<>();
 
-    /**
-     * handler初始化构造器
-     */
-    public CommandHandler() {
-        initHandler();
-    }
+    public CommandHandler() { initHandler(); }
 
-    /**
-     * 初始化指令集
-     * 注意要使用小写，与发送者的指令进行匹配
-     */
     private void initHandler() {
         registerCommand(new accept());
         registerCommand(new breakup());
         registerCommand(new createTeam());
         registerCommand(new invite());
+        registerCommand(new kick());
         registerCommand(new setPermission());
         registerCommand(new solo());
         registerCommand(new teamPVP());
-
-        // OP Commands
         registerCommand(new addPlayer());
         registerCommand(new deltaScore());
-
+        registerCommand(new status());
+        registerCommand(new forceKick());
     }
 
-    /**
-     * 手动注册指令
-     */
     public void registerCommand(ICommand command) {
-        //command.setHandler(this);
         commands.put(command.getCmdName(), command);
     }
 
-    /**
-     * 使用帮助指令
-     */
     public void showHelp(CommandSender sender) {
-        PlayerUtils.send(sender, "#BLUE#PVPRank  #GREEN#帮助");
-        for (String key: commands.keySet()) {
+        sender.sendMessage("§bPVPRank §a帮助");
+        for (String key : commands.keySet()) {
             sender.sendMessage(commands.get(key).showUsage());
         }
     }
 
-    /**
-     * 统一返回true，使用自定义的showHelp()方法。
-     */
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (args == null || args.length < 1) {
             showHelp(sender);
             return true;
         }
-
-        // mc输入的文字区分大小写
         ICommand cmd = commands.get(args[0].toLowerCase());
         try {
-            if (cmd != null && sender.hasPermission(cmd.permission())) {
-                //指令参数
+            if (cmd != null) {
+                if (!sender.hasPermission(cmd.permission())) {
+                    PlayerUtils.send(sender, "#RED#你没有权限执行该指令！");
+                    return true;
+                }
                 String[] params = new String[0];
                 if (args.length >= 2) {
-                    // 用链表的removeFirst，删掉第指令，得到参数
                     LinkedList<String> list = new LinkedList<>(Arrays.asList(args));
                     list.removeFirst();
                     params = list.toArray(new String[0]);
                 }
                 boolean res = cmd.onCommand(sender, params);
                 if (!res) {
-                    // 使用 cmd 自身的说明，而非调用 showHelp()
                     sender.sendMessage(cmd.showUsage());
                 }
+            } else {
+                showHelp(sender);
             }
         } catch (Exception e) {
             e.printStackTrace();
-            PlayerUtils.send(sender, "#RED#出现异常：%s", e.getMessage());
-            return true;
+            sender.sendMessage("§c[PVPRank] 异常: " + e.getClass().getSimpleName() + " - " + e.getMessage());
         }
         return true;
     }
 
-    /**
-     * 玩家每输入一个字母都会被服务器响应
-     */
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (args == null || args.length < 1) {
-            showHelp(sender);
             return null;
         }
-
         List<String> result = new ArrayList<>();
-        //正在输第一个指令，如 /sub god...
         if (args.length == 1) {
             String typingStr = args[0].toLowerCase();
             for (String cmdName : commands.keySet()) {
-                /*
-                  如果正在输入的字母是正确指令的前缀，且玩家拥有对应指令的权限，就将指令名称拼接到结果里去
-                  注意：这里并不是检测到一个符合就立马返回，而是返回符合前缀的指令集合
-                 */
                 if (cmdName.startsWith(typingStr)) {
                     ICommand cmd = commands.get(cmdName);
                     if (sender.hasPermission(cmd.permission())) {
@@ -127,20 +95,40 @@ public class CommandHandler implements TabExecutor {
                     }
                 }
             }
-        } else if (args.length == 2){
-            //得到第一个指令，查看对应参数
-            ICommand cmd = commands.get(args[0].toLowerCase());
-            //玩家可能会输错，找不到指令，那就不管了
-            if (cmd != null) {
-                if (Objects.equals(cmd.getCmdName(), "solo")){
-                    return cmd.getListParams();
-                } else if (Objects.equals(cmd.getCmdName(), "invite")){
-                    return cmd.getListParams();
-                } else if (Objects.equals(cmd.getCmdName(), "setPermission")){
-                    return cmd.getListParams();
-                }
+            return result;
+        }
+        ICommand cmd = commands.get(args[0].toLowerCase());
+        if (cmd == null || !sender.hasPermission(cmd.permission())) {
+            return result;
+        }
+        String cmdName = cmd.getCmdName();
+        boolean needsPlayer = cmdName.equals("solo") || cmdName.equals("invite")
+                || cmdName.equals("kick") || cmdName.equals("setpermission")
+                || cmdName.equals("addplayer") || cmdName.equals("forcekick");
+        if (args.length == 2) {
+            if (needsPlayer) {
+                return filterByPrefix(Online_Players, args[1]);
+            }
+            List<String> customParams = cmd.getListParams();
+            if (customParams != null && !customParams.isEmpty()) {
+                return filterByPrefix(customParams, args[1]);
+            }
+        } else if (args.length == 3) {
+            if (cmdName.equals("setpermission") || cmdName.equals("addplayer")) {
+                return filterByPrefix(cmd.getListParams(), args[2]);
             }
         }
         return result;
+    }
+
+    private List<String> filterByPrefix(List<String> source, String prefix) {
+        List<String> filtered = new ArrayList<>();
+        String lower = prefix.toLowerCase();
+        for (String s : source) {
+            if (s.toLowerCase().startsWith(lower)) {
+                filtered.add(s);
+            }
+        }
+        return filtered;
     }
 }

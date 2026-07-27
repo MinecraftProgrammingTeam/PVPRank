@@ -5,56 +5,42 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.inventory.Inventory;
+import top.mpt.huihui.pvprank.executor.PvPManager;
 import top.mpt.huihui.pvprank.executor.TeamExecutor;
 import top.mpt.huihui.pvprank.manager.PlayerData;
 import top.mpt.huihui.pvprank.utils.ConfigUtils;
+import top.mpt.huihui.pvprank.utils.LogUtils;
 
+import java.util.UUID;
 
-import java.util.*;
-
-import static top.mpt.huihui.pvprank.PVPRank.instance;
 import static top.mpt.huihui.pvprank.PVPRank.modeStarted;
 
 public class onPlayerDeath implements Listener {
     @EventHandler
-    public void PlayerDeathEvent(PlayerDeathEvent event){
+    public void PlayerDeathEvent(PlayerDeathEvent event) {
         modeStarted = (boolean) ConfigUtils.getDefaultConfig("start", false);
-        if (!modeStarted){
+        if (!modeStarted) return;
+
+        Player dead = event.getEntity();
+        PlayerData deadData = TeamExecutor.getPlayerData(dead.getUniqueId());
+        if (deadData == null) return;
+
+        // 处理单人PVP死亡
+        if (TeamExecutor.isPlayerInSoloPvP(dead)) {
+            String opponentUuid = deadData.getOpponentUuid();
+            if (opponentUuid != null) {
+                Player winner = Bukkit.getPlayer(UUID.fromString(opponentUuid));
+                if (winner != null && winner.isOnline()) {
+                    event.getDrops().clear();
+                    PvPManager.endSoloPvP(winner, dead);
+                }
+            }
             return;
         }
-        Player playerA = event.getEntity();
-        PlayerData playerDataA = TeamExecutor.getPlayerData(playerA.getUniqueId());
 
-
-        // 如果玩家在单挑
-        if (TeamExecutor.isPlayerInSoloPvP(playerA)){
-            // 对手
-            Player playerB = Bukkit.getPlayer(playerDataA.getOpponentUuid());
-            // 清空背包
-            playerA.getInventory().clear();
-            playerB.getInventory().clear();
-            // 如果玩家在单人PVP临时团队里面
-            if (TeamExecutor.isPlayerInSoloTeam(playerA)){
-                // 解散
-                TeamExecutor.removePlayer(playerA);
-            }
-
-            // 如果对手在单人PVP临时队伍里面
-            if (TeamExecutor.isPlayerInSoloTeam(playerB)){
-                TeamExecutor.removePlayer(playerB);
-            }
-
-            // 给玩家加分和扣分
-            TeamExecutor.deltaPlayerScore(playerA, -20);
-            TeamExecutor.deltaPlayerScore(playerB, 20);
-
-            // 传送玩家回到出生点
-            Bukkit.dispatchCommand(playerB, "home");
-
+        // 处理团队PVP死亡
+        if (TeamExecutor.isPlayerInTeamPvP(dead)) {
+            PvPManager.handleTeamPvPDeath(dead);
         }
-
     }
-
-
 }
