@@ -27,7 +27,7 @@
 
 # 如何使用
 
-先下载[Multiverse-Core](https://modrinth.com/plugin/multiverse-core)插件，之后下载最新的[Release]([Releases · MinecraftProgrammingTeam/PVPRank](https://github.com/MinecraftProgrammingTeam/PVPRank/releases/latest))，将二者全部丢入包含BukkitAPI的服务端插件包里面即可。
+先下载[Multiverse-Core](https://modrinth.com/plugin/multiverse-core)插件，之后下载最新的[Release](https://github.com/MinecraftProgrammingTeam/PVPRank/releases/latest)，将二者全部丢入包含BukkitAPI的服务端插件包里面即可。
 
 # TODOs:
 
