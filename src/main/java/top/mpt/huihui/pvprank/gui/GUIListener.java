@@ -158,7 +158,7 @@ public class GUIListener implements Listener {
             return;
         }
         // 团队信息
-        if (type == Material.BOOK) {
+        if (type == Material.BOOKSHELF) {
             GUIManager.openTeamInfo(player);
             return;
         }

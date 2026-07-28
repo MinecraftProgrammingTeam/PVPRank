@@ -15,7 +15,7 @@ buff_min_players: 1
 # - world代表的是世界名字，届时会用mv插件传送
 # 每个世界要配备两个坐标，分别代表世界中玩家A和玩家B的出生位置
 # 写坐标给我写好了啊（写坐标的时候两个逗号中间不要加空格）
-# 下方的worlds_for_teamPVP同理
+# 下方的worlds_for_team同理
 # 再次声明：请严格按照我示例的方式书写世界和坐标！！！
 worlds_for_solo:
   - world:
