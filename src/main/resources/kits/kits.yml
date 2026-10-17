@@ -2,3 +2,9 @@
 # 团队和solo的规格一样，都用下面的东西，自动发放到玩家背包里面
 things:
   - "minecraft:diamond_sword"
+
+armors:
+  helmet: "minecraft:diamond_helmet"
+  chestplate: "minecraft:diamond_chestplate"
+  leggings: "minecraft:diamond_leggings"
+  boots: "minecraft:diamond_boots"

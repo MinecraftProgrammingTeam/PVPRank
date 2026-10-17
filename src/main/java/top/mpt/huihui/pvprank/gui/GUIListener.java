@@ -1,6 +1,5 @@
 package top.mpt.huihui.pvprank.gui;
 
-import jdk.jpackage.internal.Log;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -11,14 +10,9 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import top.mpt.huihui.pvprank.executor.TeamExecutor;
-import top.mpt.huihui.pvprank.manager.PlayerData;
 import top.mpt.huihui.pvprank.utils.LogUtils;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import static top.mpt.huihui.pvprank.PVPRank.normal;
 
 public class GUIListener implements Listener {
 
@@ -69,7 +63,6 @@ public class GUIListener implements Listener {
         // ====== PlayerSelectGUI（翻页玩家列表） ======
         if (PlayerSelectGUI.isPlayerSelectGUI(title)) {
             handlePlayerSelect(player, clicked, rawTitle, title);
-            return;
         }
     }
 
@@ -96,8 +89,6 @@ public class GUIListener implements Listener {
         if (target == null) return;
 
         // 根据标题路由行为
-        String mainTitle = ChatColor.stripColor(GUIManager.MAIN_TITLE);
-        String teamTitle = ChatColor.stripColor(GUIManager.TEAM_TITLE);
         String soloTitle = ChatColor.stripColor(GUIManager.SOLO_TITLE);
         String inviteTitle = ChatColor.stripColor(GUIManager.INVITE_TITLE);
         String kickTitle = ChatColor.stripColor(GUIManager.KICK_TITLE);
@@ -187,7 +178,6 @@ public class GUIListener implements Listener {
         if (type == Material.IRON_SWORD && name.contains("PVP")) {
             GUIManager.backTargets.put(player.getUniqueId(), "team");
             GUIManager.openTeamPvpSelectGUI(player);
-            return;
         }
     }
 

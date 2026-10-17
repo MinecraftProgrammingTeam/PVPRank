@@ -23,6 +23,7 @@ public final class PVPRank extends JavaPlugin {
     public static String normal = "#AQUA#[PVP] ";
     public static boolean modeStarted = false;
     public static List<String> Online_Players = new ArrayList<>();
+    public static boolean isGameVerAbove = true;
 
     // 数据库
     private DatabaseManager dbManager;
@@ -34,6 +35,7 @@ public final class PVPRank extends JavaPlugin {
         // config
         getConfig().options().copyDefaults();
         saveDefaultConfig();
+        isGameVerAbove = getConfig().getBoolean("is_version_above_1_17");
 
         /* 数据库操作 */
         dbManager = new DatabaseManager(getDataFolder().getAbsolutePath());

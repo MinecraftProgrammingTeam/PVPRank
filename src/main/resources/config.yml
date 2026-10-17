@@ -1,4 +1,8 @@
+# 是否开启游戏
 start: false
+
+# 如果游戏版本≥1.17，填true，否则填false
+is_version_above_1_17: true
 
 # 单挑一把个人会输掉/赢得多少分
 scores_solo: 20

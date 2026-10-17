@@ -53,7 +53,7 @@ public class accept extends ICommand {
             }
             TeamExecutor.addPlayer(acceptor, teamId);
             PlayerUtils.send(acceptor, normal + "#GREEN#你已加入 %s 的队伍！", inviter.getName());
-            if (inviter != null) PlayerUtils.send(inviter, normal + "#GREEN#%s 已接受邀请加入队伍！", acceptor.getName());
+            PlayerUtils.send(inviter, normal + "#GREEN#%s 已接受邀请加入队伍！", acceptor.getName());
             return true;
         }
 

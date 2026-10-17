@@ -7,6 +7,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import top.mpt.huihui.pvprank.PVPRank;
 import top.mpt.huihui.pvprank.manager.PlayerData;
 import top.mpt.huihui.pvprank.manager.Team;
 import top.mpt.huihui.pvprank.utils.ChatUtils;
@@ -64,23 +65,61 @@ public class PvPManager {
         return items;
     }
 
+    /**
+     * 给予玩家护甲(自动穿戴)
+     * @param type 类型(helmet/chestplate/leggins/boots)
+     * @return 物品命名空间ID
+     */
+    public static String getArmors(String type) {
+        String armor = "";
+        try {
+            File kitFile = new File(instance.getDataFolder(), "kits/kits.yml");
+            if (!kitFile.exists()) instance.saveResource("kits/kits.yml", false);
+            FileConfiguration kitConfig = YamlConfiguration.loadConfiguration(kitFile);
+            armor = kitConfig.getString("armors." + type);
+        } catch (Exception e) {
+            LogUtils.warning("读取kits.yml失败: " + e.getMessage());
+        }
+        return armor;
+    }
+
     public static void giveKit(Player player) {
+        World world = player.getWorld();
+        // 保存当前游戏规则
+        boolean oldFeedback = world.getGameRuleValue(GameRule.SEND_COMMAND_FEEDBACK);
+        boolean oldCommandOutput = world.getGameRuleValue(GameRule.COMMAND_BLOCK_OUTPUT);
+        // 关闭反馈（防止玩家看到命令执行结果）
+        world.setGameRule(GameRule.SEND_COMMAND_FEEDBACK, false);
+        world.setGameRule(GameRule.COMMAND_BLOCK_OUTPUT, false);
+        // 给物品
         for (String itemId : getKitItems()) {
             try {
-                World world = player.getWorld();
-                // 保存当前游戏规则
-                boolean oldFeedback = world.getGameRuleValue(GameRule.SEND_COMMAND_FEEDBACK);
-                boolean oldCommandOutput = world.getGameRuleValue(GameRule.COMMAND_BLOCK_OUTPUT);
-                // 关闭反馈（防止玩家看到命令执行结果）
-                world.setGameRule(GameRule.SEND_COMMAND_FEEDBACK, false);
-                world.setGameRule(GameRule.COMMAND_BLOCK_OUTPUT, false);
                 Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "give " + player.getName() + " " + itemId);
-                world.setGameRule(GameRule.SEND_COMMAND_FEEDBACK, oldFeedback);
-                world.setGameRule(GameRule.COMMAND_BLOCK_OUTPUT, oldCommandOutput);
             } catch (Exception e) {
                 LogUtils.warning("发放物品失败: " + itemId);
             }
         }
+        // 穿盔甲
+        List<String> armors = new ArrayList<>(Arrays.asList("helmet", "chestplate", "leggings", "boots"));
+        List<String> tags = new ArrayList<>(Arrays.asList("head", "chest", "legs", "feet"));
+        for (int i = 0; i < armors.size(); i++) {
+            try {
+                // 如果游戏版本>= 1.17，/item replace
+                if (PVPRank.isGameVerAbove){
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "item replace entity " + player.getName() + " armor." + tags.get(i) + " with " + getArmors(armors.get(i)));
+                }
+                // 否则 /replaceitem
+                else {
+                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "replaceitem entity " + player.getName() + " slot.armor." + tags.get(i) + " 0 " + getArmors(armors.get(i)));
+                }
+
+            } catch (Exception e) {
+                LogUtils.warning("发放物品失败: " + getArmors(armors.get(i)));
+            }
+        }
+        // 恢复游戏规则
+        world.setGameRule(GameRule.SEND_COMMAND_FEEDBACK, oldFeedback);
+        world.setGameRule(GameRule.COMMAND_BLOCK_OUTPUT, oldCommandOutput);
         player.updateInventory();
     }
 
